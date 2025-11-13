@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compétition Sudoku</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
+        }
+
+        @keyframes gridBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes highlightCell {
+            0% { background: rgba(102, 126, 234, 0); }
+            50% { background: rgba(102, 126, 234, 0.2); }
+            100% { background: rgba(102, 126, 234, 0); }
+        }
+
+        @keyframes completePulse {
+            0% { background: #d5f4e6; transform: scale(1); }
+            50% { background: #c8e6c9; transform: scale(1.05); }
+            100% { background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); transform: scale(1); }
+        }
+
+        @keyframes errorPulse {
+            0%, 100% { background: #fadbd8; }
+            50% { background: #f5b7b1; }
+        }
+
+        @keyframes podiumBounce {
+            0% { transform: translateY(0) scale(0.8); opacity: 0; }
+            50% { transform: translateY(-20px) scale(1.05); }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes goldGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(243, 156, 18, 0.5), 0 10px 30px rgba(0,0,0,0.3); }
+            50% { box-shadow: 0 0 50px rgba(243, 156, 18, 0.8), 0 10px 30px rgba(0,0,0,0.3); }
+        }
+
+        @keyframes silverGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(149, 165, 166, 0.5), 0 10px 30px rgba(0,0,0,0.3); }
+            50% { box-shadow: 0 0 50px rgba(149, 165, 166, 0.8), 0 10px 30px rgba(0,0,0,0.3); }
+        }
+
+        @keyframes bronzeGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(205, 127, 50, 0.5), 0 10px 30px rgba(0,0,0,0.3); }
+            50% { box-shadow: 0 0 50px rgba(205, 127, 50, 0.8), 0 10px 30px rgba(0,0,0,0.3); }
+        }
+
+        @keyframes textGlow {
+            0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+            50% { text-shadow: 0 0 20px rgba(255, 255, 255, 1); }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            display: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-screen {
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            border-radius: 25px;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.1);
+            position: relative;
+            margin: 0;
+        }
+
+        .welcome-content {
+            max-width: 700px;
+            text-align: center;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .welcome-logo {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .welcome-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .welcome-title {
+            font-size: 3.2em;
+            font-weight: 900;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .welcome-thanks {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+            border-left: 4px solid #ffc107;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 35px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.08);
+        }
+
+        .thanks-text {
+            font-size: 1.1em;
+            color: #333;
+            line-height: 1.8;
+            font-weight: 600;
+        }
+
+        .thanks-text strong {
+            color: #d32f2f;
+            font-size: 1.15em;
+        }
+
+        .welcome-rules {
+            background: white;
+            border: 2px solid #f0f0f0;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 35px;
+            text-align: left;
+        }
+
+        .rules-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .rules-text {
+            font-size: 0.95em;
+            color: #555;
+            line-height: 1.8;
+            text-align: center;
+        }
+
+        .welcome-form {
+            background: white;
+            padding: 35px 30px;
+            border-radius: 18px;
+            box-shadow: 0 15px 50px rgba(102, 126, 234, 0.12);
+            border: 2px solid #f5f5f5;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e8e8e8;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            margin-bottom: 16px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.01) 0%, rgba(118, 75, 162, 0.01) 100%);
+        }
+
+        .form-input::placeholder {
+            color: #aaa;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px 36px;
+            font-size: 1.05em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 3.5em;
+            font-weight: 900;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 2s infinite;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+        }
+
+        .timer.warning {
+            animation: pulse 0.5s infinite;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 35px 25px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: slideIn 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            animation: glow 3s infinite;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.5);
+        }
+
+        .stat-box .label {
+            font-size: 0.9em;
+            opacity: 0.95;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
+
+        .stat-box .value {
+            font-size: 3em;
+            font-weight: 900;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .level-progress {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .level-steps {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .level-step {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            background: #ecf0f1;
+            color: #7f8c8d;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .level-step.completed {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .level-step.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transform: scale(1.05);
+        }
+
+        .level-step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -5px;
+            width: 10px;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+
+        .level-step:last-child::after {
+            display: none;
+        }
+
+        .sudoku-grid {
+            display: grid;
+            gap: 0;
+            max-width: 550px;
+            width: 100%;
+            aspect-ratio: 1;
+            margin: 0 auto 40px;
+            background: #1a1a2e;
+            border: 3px solid #16213e;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 0 2px #667eea, 0 20px 60px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.2);
+            animation: fadeIn 0.6s ease-out;
+            padding: 0;
+            position: relative;
+        }
+
+        .sudoku-grid.size-9 {
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+        }
+
+        .sudoku-grid.size-6 {
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+        }
+
+        .sudoku-grid.size-4 {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+
+        .sudoku-grid::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .sudoku-grid.size-9::before {
+            background-image: linear-gradient(0deg, transparent 32.5%, #16213e 32.5%, #16213e 33.5%, transparent 33.5%, transparent 65.5%, #16213e 65.5%, #16213e 66.5%, transparent 66.5%), linear-gradient(90deg, transparent 32.5%, #16213e 32.5%, #16213e 33.5%, transparent 33.5%, transparent 65.5%, #16213e 65.5%, #16213e 66.5%, transparent 66.5%);
+            background-size: 100% 100%;
+        }
+
+        .sudoku-grid.size-6::before {
+            background-image: linear-gradient(0deg, transparent 32.8%, #16213e 32.8%, #16213e 33.8%, transparent 33.8%, transparent 66%, #16213e 66%, #16213e 67%, transparent 67%), linear-gradient(90deg, transparent 32.8%, #16213e 32.8%, #16213e 33.8%, transparent 33.8%, transparent 66%, #16213e 66%, #16213e 67%, transparent 67%);
+            background-size: 100% 100%;
+        }
+
+        .sudoku-grid.size-4::before {
+            background-image: linear-gradient(0deg, transparent 49.5%, #16213e 49.5%, #16213e 50.5%, transparent 50.5%), linear-gradient(90deg, transparent 49.5%, #16213e 49.5%, #16213e 50.5%, transparent 50.5%);
+            background-size: 100% 100%;
+        }
+
+        .sudoku-cell {
+            border: 1.5px solid #34495e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sudoku-cell::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0), rgba(102, 126, 234, 0.1));
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .sudoku-cell:hover {
+            background: linear-gradient(135deg, #ecf0f1 0%, #f0f3f4 100%);
+            box-shadow: inset 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .sudoku-cell:hover::before {
+            opacity: 1;
+        }
+
+        .sudoku-cell.highlight {
+            background: rgba(213, 221, 254) !important;
+            box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.3) !important;
+        }
+
+        .sudoku-cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: 800;
+            background: transparent;
+            color: #667eea;
+            transition: all 0.2s ease;
+            font-variant-numeric: tabular-nums;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sudoku-cell.size-6 input {
+            font-size: 1.5em;
+        }
+
+        .sudoku-cell.size-4 input {
+            font-size: 1.2em;
+        }
+
+        .sudoku-cell input::placeholder {
+            color: rgba(102, 126, 234, 0.3);
+        }
+
+        .sudoku-cell input:focus {
+            outline: none;
+            color: #667eea;
+            font-weight: 900;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            box-shadow: inset 0 0 0 2px #667eea, 0 0 15px rgba(102, 126, 234, 0.4);
+            animation: highlightCell 0.5s ease-out;
+        }
+
+        .sudoku-cell input:focus::placeholder {
+            opacity: 0;
+        }
+
+        .sudoku-cell.success input {
+            color: #27ae60 !important;
+            font-weight: 900;
+        }
+
+        .sudoku-cell.error input {
+            color: #e74c3c !important;
+            font-weight: 900;
+            animation: pulse 0.5s ease-out;
+        }
+
+        .sudoku-cell.error {
+            animation: errorPulse 0.6s ease-out;
+        }
+
+        .sudoku-cell.complete-animation {
+            animation: completePulse 2s ease-out;
+        }
+
+        .sudoku-cell.joker-used input {
+            background: linear-gradient(135deg, #f39c12, #e67e22) !important;
+            color: white;
+            font-weight: 900;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        button {
+            padding: 16px 36px;
+            font-size: 1.05em;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px 36px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px rgba(231, 76, 60, 0.6);
+        }
+
+        .leaderboard {
+            margin-top: 40px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .leaderboard h2 {
+            color: #1a1a2e;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+
+        .leaderboard table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard thead tr {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .leaderboard th {
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .leaderboard tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.25s ease;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .leaderboard tbody tr:hover {
+            background: rgba(102, 126, 234, 0.08);
+            transform: translateX(5px);
+        }
+
+        .leaderboard td {
+            padding: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .leaderboard .rank {
+            font-weight: 900;
+            font-size: 1.2em;
+            min-width: 40px;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .leaderboard .rank-1 {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .leaderboard .rank-2 {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .leaderboard .rank-3 {
+            background: linear-gradient(135deg, #cd7f32, #b87333);
+            color: white;
+            box-shadow: 0 4px 15px rgba(205, 127, 50, 0.3);
+        }
+
+        .podium-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 30px;
+            margin: 50px 0;
+            min-height: 400px;
+            perspective: 1000px;
+        }
+
+        .podium-item {
+            text-align: center;
+            animation: podiumBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .podium-item.first {
+            order: 2;
+            animation: podiumBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+        }
+
+        .podium-item.second {
+            order: 1;
+            animation: podiumBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s both;
+        }
+
+        .podium-item.third {
+            order: 3;
+            animation: podiumBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
+        }
+
+        .medal {
+            font-size: 5em;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        .podium-step {
+            border-radius: 15px;
+            padding: 30px 20px;
+            color: white;
+            font-weight: 900;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .podium-item.first .podium-step {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            width: 200px;
+            height: 280px;
+            font-size: 3em;
+            animation: goldGlow 2s infinite;
+            box-shadow: 0 0 50px rgba(243, 156, 18, 0.6), 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .podium-item.second .podium-step {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            width: 180px;
+            height: 220px;
+            font-size: 2.5em;
+            animation: silverGlow 2s infinite;
+            box-shadow: 0 0 50px rgba(149, 165, 166, 0.6), 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .podium-item.third .podium-step {
+            background: linear-gradient(135deg, #cd7f32, #b87333);
+            width: 180px;
+            height: 180px;
+            font-size: 2em;
+            animation: bronzeGlow 2s infinite;
+            box-shadow: 0 0 50px rgba(205, 127, 50, 0.6), 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .podium-name {
+            font-size: 1.5em;
+            margin-top: 15px;
+            animation: textGlow 2s infinite;
+        }
+
+        .podium-score {
+            font-size: 1.2em;
+            opacity: 0.95;
+            margin-top: 8px;
+        }
+
+        input[type="text"] {
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .message {
+            padding: 18px 24px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 1.05em;
+            animation: slideIn 0.4s ease-out;
+            border-left: 4px solid;
+        }
+
+        .message.success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border-left-color: #27ae60;
+        }
+
+        .message.error {
+            background: #fadbd8;
+            color: #e74c3c;
+            border-left-color: #e74c3c;
+        }
+
+        .level-indicator {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .welcome-screen, .game-screen, .results-screen {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .sudoku-grid {
+                max-width: 95vw;
+            }
+
+            .timer {
+                font-size: 2.5em;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .stat-box {
+                padding: 25px 15px;
+            }
+
+            .stat-box .value {
+                font-size: 2em;
+            }
+
+            button {
+                padding: 14px 28px;
+                font-size: 0.95em;
+            }
+
+            .level-steps {
+                flex-wrap: wrap;
+            }
+
+            .podium-container {
+                gap: 15px;
+                min-height: 300px;
+            }
+
+            .podium-item.first .podium-step {
+                width: 150px;
+                height: 200px;
+                font-size: 2em;
+            }
+
+            .podium-item.second .podium-step {
+                width: 140px;
+                height: 160px;
+                font-size: 1.8em;
+            }
+
+            .podium-item.third .podium-step {
+                width: 140px;
+                height: 140px;
+                font-size: 1.5em;
+            }
+
+            .leaderboard {
+                overflow-x: auto;
+            }
+
+            .leaderboard table {
+                min-width: 600px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .timer {
+                font-size: 2em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            button {
+                width: 100%;
+                padding: 14px 20px;
+            }
+
+            .buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .podium-container {
+                gap: 10px;
+            }
+
+            .podium-item.first .podium-step {
+                width: 120px;
+                height: 150px;
+                font-size: 1.5em;
+            }
+
+            .podium-item.second .podium-step {
+                width: 110px;
+                height: 120px;
+                font-size: 1.3em;
+            }
+
+            .podium-item.third .podium-step {
+                width: 110px;
+                height: 110px;
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Écran de bienvenue -->
+        <div id="welcomeScreen" class="welcome-screen">
+            <div class="welcome-content">
+                <div class="welcome-logo">🧩</div>
+                
+                <div class="welcome-badge">🏆 Compétition Officielle Sudoku</div>
+                
+                <h1 class="welcome-title">Premier participation au NJV</h1>
+                
+                <p class="welcome-subtitle">Testez vos compétences et dominez le classement</p>
+
+                <div class="welcome-thanks">
+                    <p class="thanks-text">
+                        🔥 <strong>La première Compétition de Logique & Sudoku est lancée !</strong> Affûtez vos esprits et défiez le chronomètre pour le podium. Un immense merci à tous les participants : votre présence rend cet événement unique. Que la meilleure logique l'emporte !
+                    </p>
+                </div>
+
+                <div class="welcome-rules">
+                    <div class="rules-title">📋 Comment ça fonctionne ?</div>
+                    <p class="rules-text">
+                        Résolvez 3 grilles de sudoku en ordre croissant de difficulté (Facile → Moyen → Difficile) en 30 minutes maximum. 
+                        Chaque réponse correcte vous rapporte des points, accumulez le score le plus élevé pour monter sur le podium !
+                    </p>
+                </div>
+
+                <div class="welcome-form">
+                    <div class="form-group">
+                        <label class="form-label">👤 Votre pseudo</label>
+                        <input type="text" id="playerName" class="form-input" placeholder="Entrez votre nom et prénom">
+                    </div>
+                    <button class="btn-primary" onclick="startCompetition()">
+                        <span>🚀 Lancer la Compétition</span>
+                    </button>
+                </div>
+
+                <p style="color: #999; font-size: 0.9em; margin: 0;">Que le meilleur sudokiste gagne ! 💪</p>
+            </div>
+        </div>
+
+        <!-- Écran de jeu -->
+        <div id="gameScreen" class="game-screen hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div>
+                    <h1 style="margin: 0; font-size: 2em;">Sudoku</h1>
+                    <span class="level-indicator">Niveau: <span id="levelName">Facile</span></span>
+                </div>
+                <div class="timer" id="timer">30:00</div>
+            </div>
+
+            <div class="level-progress">
+                <div class="level-steps">
+                    <div class="level-step active" id="step-0">🟡 Facile</div>
+                    <div class="level-step" id="step-1">🟠 Moyen</div>
+                    <div class="level-step" id="step-2">🔴 Difficile</div>
+                </div>
+            </div>
+
+            <div id="message" class="message" style="display: none;"></div>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="label">Score</div>
+                    <div class="value" id="score">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Grilles Résolues</div>
+                    <div class="value" id="solved">0</div>
+                </div>
+            </div>
+
+            <div id="sudokuGrid" class="sudoku-grid"></div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-primary" id="jokerBtn" onclick="useJoker()">
+                    <span>🃏 Joker</span>
+                </button>
+                <button class="btn-danger" onclick="endCompetition()">
+                    <span>⏹️ Terminer</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Écran des résultats -->
+        <div id="resultsScreen" class="results-screen hidden">
+            <h1>🏆 Classement Final</h1>
+            
+            <div id="podiumContainer" class="podium-container"></div>
+
+            <div class="leaderboard">
+                <h2>📊 Tous les Résultats</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Joueur</th>
+                            <th>Score</th>
+                            <th>Grilles</th>
+                            <th>Erreurs</th>
+                            <th>Temps</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 1800;
+        let timerInterval;
+        let currentPlayer = '';
+        let currentScore = 0;
+        let solvedCount = 0;
+        let startTime;
+        let currentSudoku = null;
+        let currentSolution = null;
+        let currentLevel = '';
+        let currentLevelIndex = 0;
+        let players = [];
+        let sudokuStartTime = 0;
+        let jokerUsed = false;
+        let failureCount = 0;
+        let gridSize = 9;
+
+        const levelSequence = ['Facile', 'Moyen', 'Difficile'];
+        
+        const levelCells = {
+            'Facile': 40,
+            'Moyen': 35,
+            'Difficile': 25
+        };
+
+        const levelGridSize = {
+            'Facile': 9,
+            'Moyen': 9,
+            'Difficile': 9
+        };
+
+        // Charger les joueurs au démarrage
+        function loadPlayersFromStorage() {
+            const stored = localStorage.getItem('sudokuPlayers');
+            const timestamp = localStorage.getItem('sudokuPlayersTimestamp');
+            
+            if (stored && timestamp) {
+                const now = Date.now();
+                const savedTime = parseInt(timestamp);
+                const thirtyMinutes = 30 * 60 * 1000; // 30 minutes en millisecondes
+                
+                // Si moins de 30 minutes ont passé, charger les données
+                if (now - savedTime < thirtyMinutes) {
+                    try {
+                        players = JSON.parse(stored);
+                    } catch (e) {
+                        players = [];
+                    }
+                } else {
+                    // Sinon, supprimer les données
+                    localStorage.removeItem('sudokuPlayers');
+                    localStorage.removeItem('sudokuPlayersTimestamp');
+                    players = [];
+                }
+            }
+        }
+
+        // Sauvegarder les joueurs dans localStorage avec timestamp
+        function savePlayersToStorage() {
+            localStorage.setItem('sudokuPlayers', JSON.stringify(players));
+            localStorage.setItem('sudokuPlayersTimestamp', Date.now().toString());
+        }
+
+        // Charger les joueurs au chargement de la page
+        loadPlayersFromStorage();
+
+        function startCompetition() {
+            currentPlayer = document.getElementById('playerName').value.trim();
+            if (!currentPlayer) {
+                showMessage('Veuillez entrer votre nom', 'error');
+                return;
+            }
+
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            
+            timeLeft = 1800;
+            currentScore = 0;
+            solvedCount = 0;
+            failureCount = 0;
+            currentLevelIndex = 0;
+            startTime = Date.now();
+            
+            nextSudoku();
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                document.getElementById('score').textContent = currentScore;
+                document.getElementById('solved').textContent = solvedCount;
+                
+                if (timeLeft === 300) {
+                    document.getElementById('timer').classList.add('warning');
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endCompetition();
+                }
+            }, 1000);
+        }
+
+        function generateSudoku(level) {
+            const gridSize = levelGridSize[level];
+            const cellsToShow = levelCells[level];
+            const completeSudoku = generateCompleteSudoku(gridSize);
+            const puzzle = JSON.parse(JSON.stringify(completeSudoku));
+            
+            let cellsToRemove = (gridSize * gridSize) - cellsToShow;
+            
+            while (cellsToRemove > 0) {
+                const row = Math.floor(Math.random() * gridSize);
+                const col = Math.floor(Math.random() * gridSize);
+                
+                if (puzzle[row][col] !== 0) {
+                    puzzle[row][col] = 0;
+                    cellsToRemove--;
+                }
+            }
+            
+            return { puzzle, solution: completeSudoku };
+        }
+
+        function generateCompleteSudoku(size) {
+            const grid = Array(size).fill(null).map(() => Array(size).fill(0));
+            fillGrid(grid, size);
+            return grid;
+        }
+
+        function fillGrid(grid, size) {
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    if (grid[row][col] === 0) {
+                        const numbers = shuffle(Array.from({length: size}, (_, i) => i + 1));
+                        
+                        for (let num of numbers) {
+                            if (isValid(grid, row, col, num, size)) {
+                                grid[row][col] = num;
+                                
+                                if (fillGrid(grid, size)) {
+                                    return true;
+                                }
+                                
+                                grid[row][col] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function isValid(grid, row, col, num, size) {
+            const boxSize = size === 9 ? 3 : size === 6 ? 2 : 2;
+            
+            for (let i = 0; i < size; i++) {
+                if (grid[row][i] === num || grid[i][col] === num) return false;
+            }
+            
+            const startRow = Math.floor(row / boxSize) * boxSize;
+            const startCol = Math.floor(col / boxSize) * boxSize;
+            
+            for (let i = startRow; i < startRow + boxSize; i++) {
+                for (let j = startCol; j < startCol + boxSize; j++) {
+                    if (grid[i][j] === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function nextSudoku() {
+            if (currentLevelIndex >= levelSequence.length) {
+                endCompetition();
+                return;
+            }
+
+            currentLevel = levelSequence[currentLevelIndex];
+            gridSize = levelGridSize[currentLevel];
+            
+            const { puzzle, solution } = generateSudoku(currentLevel);
+            currentSudoku = puzzle;
+            currentSolution = solution;
+            jokerUsed = false;
+            
+            updateLevelProgress();
+            document.getElementById('levelName').textContent = currentLevel;
+            document.getElementById('jokerBtn').textContent = '🃏 Joker';
+            document.getElementById('jokerBtn').disabled = false;
+            
+            renderSudoku(puzzle);
+            sudokuStartTime = Date.now();
+        }
+
+        function updateLevelProgress() {
+            for (let i = 0; i < levelSequence.length; i++) {
+                const step = document.getElementById(`step-${i}`);
+                step.classList.remove('active', 'completed');
+                
+                if (i < currentLevelIndex) {
+                    step.classList.add('completed');
+                } else if (i === currentLevelIndex) {
+                    step.classList.add('active');
+                }
+            }
+        }
+
+        function renderSudoku(puzzle) {
+            const grid = document.getElementById('sudokuGrid');
+            grid.innerHTML = '';
+            grid.className = `sudoku-grid size-${gridSize}`;
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `sudoku-cell size-${gridSize === 4 ? '4' : gridSize === 6 ? '6' : '9'}`;
+                    cell.id = `cell-${i}-${j}`;
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = '1';
+                    input.inputMode = 'numeric';
+                    input.placeholder = '0';
+                    
+                    if (puzzle[i][j] !== 0) {
+                        input.value = puzzle[i][j];
+                        cell.classList.add('fixed');
+                        input.disabled = true;
+                    } else {
+                        input.addEventListener('input', (e) => handleKeyboardInput(e, i, j));
+                        input.addEventListener('focus', (e) => highlightRelated(i, j, true));
+                        input.addEventListener('blur', (e) => highlightRelated(i, j, false));
+                    }
+                    
+                    cell.appendChild(input);
+                    grid.appendChild(cell);
+                }
+            }
+            
+            updateProgressBar();
+        }
+
+        function handleKeyboardInput(e, row, col) {
+            let value = e.target.value;
+            
+            if (value === '') {
+                e.target.value = '';
+                return;
+            }
+            
+            const numValue = parseInt(value);
+            
+            if (isNaN(numValue) || numValue < 1 || numValue > gridSize) {
+                e.target.value = '';
+                return;
+            }
+            
+            e.target.value = numValue;
+            validateInput(e, row, col);
+        }
+
+        function highlightRelated(row, col, isHighlight) {
+            const cells = document.querySelectorAll('.sudoku-cell');
+            
+            cells.forEach((cell, index) => {
+                const r = Math.floor(index / gridSize);
+                const c = index % gridSize;
+                
+                if (isHighlight) {
+                    const boxSize = gridSize === 9 ? 3 : gridSize === 6 ? 2 : 2;
+                    if (r === row || c === col || 
+                        (Math.floor(r / boxSize) === Math.floor(row / boxSize) && 
+                         Math.floor(c / boxSize) === Math.floor(col / boxSize))) {
+                        cell.classList.add('highlight');
+                    }
+                } else {
+                    cell.classList.remove('highlight');
+                }
+            });
+        }
+
+        function validateInput(e, row, col) {
+            const value = parseInt(e.target.value);
+            const cell = document.getElementById(`cell-${row}-${col}`);
+            
+            if (!value || value < 1 || value > gridSize) {
+                cell.classList.remove('success', 'error');
+                return;
+            }
+            
+            const isCorrect = value === currentSolution[row][col];
+            
+            if (isCorrect) {
+                cell.classList.remove('error');
+                cell.classList.add('success');
+                checkLineColBox(row, col);
+            } else {
+                cell.classList.remove('success');
+                cell.classList.add('error');
+                failureCount++;
+                currentScore = Math.max(0, currentScore - 5);
+                
+                setTimeout(() => {
+                    cell.classList.remove('error');
+                }, 600);
+            }
+            
+            updateProgressBar();
+        }
+
+        function checkLineColBox(row, col) {
+            let lineComplete = true;
+            let colComplete = true;
+            let boxComplete = true;
+            const boxSize = gridSize === 9 ? 3 : gridSize === 6 ? 2 : 2;
+            
+            for (let i = 0; i < gridSize; i++) {
+                const cellInput = document.getElementById(`cell-${row}-${i}`).querySelector('input');
+                const value = parseInt(cellInput.value);
+                
+                if (!value || value !== currentSolution[row][i]) {
+                    lineComplete = false;
+                    break;
+                }
+            }
+            
+            for (let i = 0; i < gridSize; i++) {
+                const cellInput = document.getElementById(`cell-${i}-${col}`).querySelector('input');
+                const value = parseInt(cellInput.value);
+                
+                if (!value || value !== currentSolution[i][col]) {
+                    colComplete = false;
+                    break;
+                }
+            }
+            
+            const startRow = Math.floor(row / boxSize) * boxSize;
+            const startCol = Math.floor(col / boxSize) * boxSize;
+            
+            for (let i = startRow; i < startRow + boxSize; i++) {
+                for (let j = startCol; j < startCol + boxSize; j++) {
+                    const cellInput = document.getElementById(`cell-${i}-${j}`).querySelector('input');
+                    const value = parseInt(cellInput.value);
+                    
+                    if (!value || value !== currentSolution[i][j]) {
+                        boxComplete = false;
+                        break;
+                    }
+                }
+                if (!boxComplete) break;
+            }
+            
+            if (lineComplete) {
+                animateComplete(row, col, 'line');
+                currentScore += 10;
+            }
+            
+            if (colComplete) {
+                animateComplete(row, col, 'col');
+                currentScore += 10;
+            }
+            
+            if (boxComplete) {
+                animateComplete(row, col, 'box');
+                currentScore += 15;
+            }
+            
+            checkSudokuComplete();
+        }
+
+        function animateComplete(row, col, type) {
+            const toAnimate = [];
+            const boxSize = gridSize === 9 ? 3 : gridSize === 6 ? 2 : 2;
+            
+            if (type === 'line') {
+                for (let j = 0; j < gridSize; j++) {
+                    toAnimate.push(document.getElementById(`cell-${row}-${j}`));
+                }
+            } else if (type === 'col') {
+                for (let i = 0; i < gridSize; i++) {
+                    toAnimate.push(document.getElementById(`cell-${i}-${col}`));
+                }
+            } else if (type === 'box') {
+                const startRow = Math.floor(row / boxSize) * boxSize;
+                const startCol = Math.floor(col / boxSize) * boxSize;
+                
+                for (let i = startRow; i < startRow + boxSize; i++) {
+                    for (let j = startCol; j < startCol + boxSize; j++) {
+                        toAnimate.push(document.getElementById(`cell-${i}-${j}`));
+                    }
+                }
+            }
+            
+            const grid = document.getElementById('sudokuGrid');
+            grid.style.animation = 'gridBounce 0.6s ease-in-out';
+            setTimeout(() => {
+                grid.style.animation = '';
+            }, 600);
+            
+            toAnimate.forEach(cell => {
+                cell.classList.add('complete-animation');
+                setTimeout(() => {
+                    cell.classList.remove('complete-animation');
+                }, 2000);
+            });
+        }
+
+        function checkSudokuComplete() {
+            let isComplete = true;
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cellInput = document.getElementById(`cell-${i}-${j}`).querySelector('input');
+                    const value = parseInt(cellInput.value);
+                    
+                    if (!value || value !== currentSolution[i][j]) {
+                        isComplete = false;
+                        break;
+                    }
+                }
+                if (!isComplete) break;
+            }
+            
+            if (isComplete) {
+                solvedCount++;
+                currentScore += 50;
+                showMessage(`✨ Grille complète en ${currentLevel}!`, 'success');
+                
+                currentLevelIndex++;
+                
+                setTimeout(() => {
+                    nextSudoku();
+                }, 2000);
+            }
+        }
+
+        function useJoker() {
+            if (jokerUsed) {
+                showMessage('Vous avez déjà utilisé votre joker pour cette grille !', 'error');
+                return;
+            }
+            
+            let emptyCells = [];
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cellInput = document.getElementById(`cell-${i}-${j}`).querySelector('input');
+                    if (!cellInput.value || cellInput.value === '') {
+                        emptyCells.push({ row: i, col: j });
+                    }
+                }
+            }
+            
+            if (emptyCells.length === 0) {
+                showMessage('Grille déjà complète !', 'error');
+                return;
+            }
+            
+            const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            const input = document.getElementById(`cell-${randomCell.row}-${randomCell.col}`).querySelector('input');
+            
+            input.value = currentSolution[randomCell.row][randomCell.col];
+            input.classList.add('joker-used');
+            
+            jokerUsed = true;
+            document.getElementById('jokerBtn').textContent = '✓ Joker utilisé';
+            document.getElementById('jokerBtn').disabled = true;
+            
+            currentScore += 5;
+            
+            showMessage(`🎯 Case remplie: ${randomCell.row + 1}, ${randomCell.col + 1}`, 'success');
+            
+            validateInput({ target: input }, randomCell.row, randomCell.col);
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateProgressBar() {
+            let filledCells = 0;
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cellInput = document.getElementById(`cell-${i}-${j}`).querySelector('input');
+                    if (cellInput.value) {
+                        filledCells++;
+                    }
+                }
+            }
+            
+            const progress = (filledCells / (gridSize * gridSize)) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function endCompetition() {
+            clearInterval(timerInterval);
+            
+            const finalScore = currentScore - (failureCount * 2);
+            
+            const playerStatus = solvedCount === 0 ? 'Abandonné' : 'Complété';
+            const playerInfo = {
+                name: currentPlayer,
+                score: Math.max(0, finalScore),
+                solved: solvedCount,
+                time: `${Math.floor((Date.now() - startTime) / 1000)}s`,
+                failures: failureCount,
+                status: playerStatus,
+                timeSpent: Date.now() - startTime
+            };
+            
+            players.push(playerInfo);
+            savePlayersToStorage(); // Sauvegarder après ajout
+            
+            players.sort((a, b) => {
+                if (a.status === 'Abandonné' && b.status === 'Complété') return 1;
+                if (a.status === 'Complété' && b.status === 'Abandonné') return -1;
+                if (a.status === b.status) {
+                    return b.score - a.score;
+                }
+                return 0;
+            });
+            
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            displayResults();
+        }
+
+        function displayResults() {
+            const podiumContainer = document.getElementById('podiumContainer');
+            podiumContainer.innerHTML = '';
+
+            const activePlayers = players.filter(p => p.status === 'Complété');
+
+            if (activePlayers.length >= 1) {
+                const first = activePlayers[0];
+                const podiumFirst = document.createElement('div');
+                podiumFirst.className = 'podium-item first';
+                podiumFirst.innerHTML = `
+                    <div class="medal">🥇</div>
+                    <div class="podium-step">
+                        <div style="font-size: 0.8em; margin-top: -10px;">1er</div>
+                    </div>
+                    <div class="podium-name">${first.name}</div>
+                    <div class="podium-score">${first.score} pts</div>
+                `;
+                podiumContainer.appendChild(podiumFirst);
+            }
+
+            if (activePlayers.length >= 2) {
+                const second = activePlayers[1];
+                const podiumSecond = document.createElement('div');
+                podiumSecond.className = 'podium-item second';
+                podiumSecond.innerHTML = `
+                    <div class="medal">🥈</div>
+                    <div class="podium-step">
+                        <div style="font-size: 0.8em; margin-top: -10px;">2e</div>
+                    </div>
+                    <div class="podium-name">${second.name}</div>
+                    <div class="podium-score">${second.score} pts</div>
+                `;
+                podiumContainer.appendChild(podiumSecond);
+            }
+
+            if (activePlayers.length >= 3) {
+                const third = activePlayers[2];
+                const podiumThird = document.createElement('div');
+                podiumThird.className = 'podium-item third';
+                podiumThird.innerHTML = `
+                    <div class="medal">🥉</div>
+                    <div class="podium-step">
+                        <div style="font-size: 0.8em; margin-top: -10px;">3e</div>
+                    </div>
+                    <div class="podium-name">${third.name}</div>
+                    <div class="podium-score">${third.score} pts</div>
+                `;
+                podiumContainer.appendChild(podiumThird);
+            }
+
+            if (activePlayers.length === 0) {
+                podiumContainer.innerHTML = `
+                    <div style="text-align: center; width: 100%; padding: 40px; color: #666;">
+                        <p style="font-size: 1.2em;">Pas assez de joueurs pour un podium</p>
+                    </div>
+                `;
+            }
+
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+
+            players.forEach((player, index) => {
+                const row = document.createElement('tr');
+                const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+                
+                let statusDisplay = player.status === 'Abandonné' ? '⏸️ Abandonné' : '✅ Complété';
+                let statusColor = player.status === 'Abandonné' ? '#e74c3c' : '#27ae60';
+                
+                row.innerHTML = `
+                    <td class="rank ${rankClass}">${index + 1}</td>
+                    <td><strong>${player.name}</strong></td>
+                    <td><strong>${player.score}</strong> pts</td>
+                    <td>${player.solved}</td>
+                    <td>${player.failures}</td>
+                    <td>${player.time}</td>
+                    <td style="color: ${statusColor}; font-weight: 700;">${statusDisplay}</td>
+                `;
+                row.style.animationDelay = `${index * 0.1}s`;
+                
+                if (player.status === 'Abandonné') {
+                    row.style.opacity = '0.7';
+                    row.style.backgroundColor = 'rgba(231, 76, 60, 0.05)';
+                }
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function resetCompetition() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
