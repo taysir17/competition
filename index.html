@@ -1162,7 +1162,7 @@
             if (stored && timestamp) {
                 const now = Date.now();
                 const savedTime = parseInt(timestamp);
-                const thirtyMinutes = 30 * 60 * 1000; // 30 minutes en millisecondes
+                const thirtyMinutes = 30 * 80 * 1000; // 30 minutes en millisecondes
                 
                 // Si moins de 30 minutes ont passé, charger les données
                 if (now - savedTime < thirtyMinutes) {
